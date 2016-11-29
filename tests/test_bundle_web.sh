@@ -1,11 +1,11 @@
 #!/bin/bash
+set -e
+set -x
 
 : ${NODE_VERSION?"NODE_VERSION has not been set."}
 
-set -x
-
 function clean() {
-  docker rm -f web
+  docker rm -f web || true
 }
 
 cd /tmp

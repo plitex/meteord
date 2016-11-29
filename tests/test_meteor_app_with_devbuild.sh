@@ -1,13 +1,11 @@
 #!/bin/bash
-
-: ${NODE_VERSION?"NODE_VERSION has not been set."}
-
+set -e
 set -x
 
 function clean() {
-  docker rm -f meteor-app
-  docker rmi -f meteor-app-image
-  rm -rf hello
+  docker rm -f meteor-app || true
+  docker rmi -f meteor-app-image || true
+  rm -rf hello || true
 }
 
 cd /tmp
@@ -15,7 +13,7 @@ clean
 
 meteor create hello
 cd hello
-echo "FROM abernix/meteord:node-${NODE_VERSION}-devbuild" > Dockerfile
+echo "FROM plitex/meteord:devbuild" > Dockerfile
 
 docker build -t meteor-app-image ./
 docker run -d \

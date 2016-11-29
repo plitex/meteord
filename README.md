@@ -1,6 +1,15 @@
-[![Circle CI](https://circleci.com/gh/abernix/meteord/tree/master.svg?style=svg)](https://circleci.com/gh/abernix/meteord/tree/master)
+[![CircleCI](https://circleci.com/gh/plitex/meteord/tree/master.svg?style=svg)](https://circleci.com/gh/plitex/meteord/tree/master)
 
-> ###Use [kadirahq/meteord](https://github.com/kadirahq/meteord) for meteor 1.4 and above. 
+# Fork information
+
+After some time using the awesome [meteorhacks/meteord](https://github.com/meteorhacks/meteord) and the [abernix/meteord](https://github.com/abernix/meteord) after Meteor 1.4, I was looking to have a base image not bound to a node version. My idea was to be able to detect the app meteor release and install the exact Meteor version to build and the corresponding Node version to run the bundle.
+
+What does this fork offer:
+
+  - Compatible with Meteor 1.2+
+  - Meteor & Node version detection
+  - Setup NPM to install packages from a private registry
+  - PhantomJS is only available in plitex/meteord:testbuild
 
 ## MeteorD - Docker Runtime for Meteor Apps
 
@@ -15,12 +24,12 @@ There are two main ways you can use Docker with Meteor apps. They are:
 
 With this method, your app will be converted into a Docker image. Then you can simply run that image.  
 
-For that, you can use `meteorhacks/meteord:onbuild` as your base image. Magically, that's only thing you have to do. Here's how to do it:
+For that, you can use `plitex/meteord:onbuild` as your base image. Magically, that's only thing you have to do. Here's how to do it:
 
 Add following `Dockerfile` into the root of your app:
 
 ~~~shell
-FROM meteorhacks/meteord:onbuild
+FROM plitex/meteord:onbuild
 ~~~
 
 Then you can build the docker image with:
@@ -43,9 +52,7 @@ Then you can access your app from the port 8080 of the host system.
 
 #### Stop downloading Meteor each and every time (mostly in development)
 
-So, with the above method, MeteorD will download and install Meteor each and every time. That's bad especially in development. So, we've a solution for that. Simply use `meteorhacks/meteord:devbuild` as your base image.
-
-> WARNING: Don't use `meteorhacks/meteord:devbuild` for your final build. If you used it, your image will carry the Meteor distribution as well. As a result of that, you'll end up with an image with ~700 MB.
+So, with the above method, MeteorD will download and install Meteor each and every time. That's bad especially in development. So, we've a solution for that. Simply use `plitex/meteord:devbuild` as your base image.
 
 ### 2. Running a Meteor bundle with Docker
 
@@ -60,7 +67,7 @@ docker run -d \
     -e MONGO_OPLOG_URL=mongodb://oplog_url \
     -v /mybundle_dir:/bundle \
     -p 8080:80 \
-    meteorhacks/meteord:base
+    plitex/meteord:base
 ~~~
 
 With this method, MeteorD looks for the tarball version of the meteor bundle. So, you should build the meteor bundle for `os.linux.x86_64` and put it inside the `/bundle` volume. This is how you can build a meteor bundle.
@@ -80,7 +87,7 @@ docker run -d \
     -e MONGO_OPLOG_URL=mongodb://oplog_url \
     -e BUNDLE_URL=http://mybundle_url_at_s3.tar.gz \
     -p 8080:80 \
-    meteorhacks/meteord:base
+    plitex/meteord:base
 ~~~
 
 #### 2.2 With Docker Compose
@@ -104,7 +111,7 @@ mongo:
 
 When using Docker Compose to start a Meteor container with a Mongo container as well, we need to wait for the database to start up before we try to start the Meteor app, else the container will fail to start.
 
-This sample docker-compose.yml file starts up a container that has used meteorhacks/meterod as its base and a mongo container. It also passes along several variables to Meteor needed to start up, specifies the port number the container will listen on, and waits 30 seconds for the mongodb container to start up before starting up the Meteor container.
+This sample docker-compose.yml file starts up a container that has used plites/meteord as its base and a mongo container. It also passes along several variables to Meteor needed to start up, specifies the port number the container will listen on, and waits 30 seconds for the mongodb container to start up before starting up the Meteor container.
 
 #### Rebuilding Binary Modules
 
@@ -118,7 +125,67 @@ docker run -d \
     -e BUNDLE_URL=http://mybundle_url_at_s3.tar.gz \
     -e REBUILD_NPM_MODULES=1 \
     -p 8080:80 \
-    meteorhacks/meteord:binbuild
+    plitex/meteord:binbuild
+~~~
+
+## Setup NPM to access a private registry
+
+You can pass information about a private registry (only one at the moment) at build time.
+The docker build ARGS available are:
+
+  - NPM_PRIVATE_REGISTRY_URL (https://myregistry.io/)
+  - NPM_PRIVATE_REGISTRY_SCOPE (@myscope)
+  - NPM_PRIVATE_REGISTRY_TOKEN (supersecret)
+
+All args are optional, depending on your registry setup you may need only URL or more.
+
+The options shown will create during build (and cleared after) a ~/.npmrc file with:
+~~~bash
+@myscope:registry=https://myregistry.io/
+//myregistry.io/:_authToken=supersecret
+~~~
+
+#### Create a Dockerfile to build your app
+
+~~~dockerfile
+FROM plitex/meteord:onbuild
+~~~
+#### Build (using docker build)
+
+~~~shell
+$ docker build \
+--build-arg NPM_PRIVATE_REGISTRY_URL=http://myregistry.io/ \
+--build-arg NPM_PRIVATE_REGISTRY_SCOPE=@scope \
+--build-arg NPM_PRIVATE_REGISTRY_TOKEN=supersecret -t my-app-image .
+~~~
+
+#### Build (using docker-compose)
+docker-compose.yml
+
+~~~yaml
+dashboard:
+  build:
+    context: .
+    args:
+      - NPM_PRIVATE_REGISTRY_URL=http://myregistry.io/
+      - NPM_PRIVATE_REGISTRY_SCOPE=@scope
+      - NPM_PRIVATE_REGISTRY_TOKEN=supersecret
+  ports:
+   - "80:80"
+  links:
+   - mongo
+  environment:
+   - MONGO_URL=mongodb://mongo/yourapp
+   - ROOT_URL=http://yourapp.com
+   - MAIL_URL=smtp://some.mailserver.com:25
+
+mongo:
+  image: mongo:latest
+~~~
+
+Build
+~~~shell
+$ docker-compose up
 ~~~
 
 ## Known Issues

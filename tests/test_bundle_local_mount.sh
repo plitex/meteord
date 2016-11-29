@@ -1,12 +1,10 @@
 #!/bin/bash
-
-: ${NODE_VERSION?"NODE_VERSION has not been set."}
-
+set -e
 set -x
 
 function clean() {
-  docker rm -f localmount
-  rm -rf localmount
+  docker rm -f localmount || true
+  rm -rf localmount || true
 }
 
 cd /tmp
@@ -23,7 +21,7 @@ docker run -d \
     -e ROOT_URL=http://localmount_app \
     -v /tmp/localmount:/bundle \
     -p 9090:80 \
-    "abernix/meteord:node-${NODE_VERSION}-base"
+    "plitex/meteord:base"
 
 sleep 50
 

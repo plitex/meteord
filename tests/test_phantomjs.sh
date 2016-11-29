@@ -1,18 +1,16 @@
 #!/bin/bash
-
-: ${NODE_VERSION?"NODE_VERSION has not been set."}
-
+set -e
 set -x
 
 function clean() {
-  docker rm -f phantomjs_check
+  docker rm -f phantomjs_check || true
 }
 
 clean
 docker run  \
     --name phantomjs_check \
-    --entrypoint="/bin/bash" \
-    "abernix/meteord:node-${NODE_VERSION}-base" -c 'phantomjs -h'
+    --entrypoint="/bin/sh" \
+    "plitex/meteord:testbuild" -c 'phantomjs -h'
 
 sleep 5
 

@@ -1,11 +1,9 @@
 #!/bin/bash
-
-: ${NODE_VERSION?"NODE_VERSION has not been set."}
-
+set -e
 set -x
 
 function clean() {
-  docker rm -f no_app
+  docker rm -f no_app || true
 }
 
 cd /tmp
@@ -15,7 +13,7 @@ docker run -d \
     --name no_app \
     -e ROOT_URL=http://no_app \
     -p 9090:80 \
-    "abernix/meteord:node-${NODE_VERSION}-base"
+    "plitex/meteord:base"
 
 sleep 10
 
