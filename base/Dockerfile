@@ -1,6 +1,8 @@
 FROM debian:jessie
 MAINTAINER Miguel Mejias
 
+ENV METEOR_ALLOW_SUPERUSER 1
+
 ENV METEORD_DIR /opt/meteord
 COPY scripts $METEORD_DIR
 
